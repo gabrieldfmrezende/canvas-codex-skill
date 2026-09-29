@@ -1,29 +1,31 @@
 # Canvas LMS skill for Codex
 
-Skill pessoal do Codex para consultar cursos e arquivos do Canvas LMS pela API REST. O helper inclu°do Ç somente de leitura, exceto pelo download local solicitado pelo usu†rio.
+Languages: English | [Portugu√™s (Brasil)](README.pt-BR.md)
 
-## Requisitos
+A personal Codex skill for accessing Canvas LMS courses and files through the REST API. The included helper is read-only, except when the user requests a local file download.
 
-- Windows PowerShell 5.1 ou PowerShell 7+
-- Uma conta do Canvas LMS com permiss∆o para gerar token de acesso
-- Codex com suporte a skills locais
+## Requirements
 
-## Gerar o token no Canvas
+- Windows PowerShell 5.1 or PowerShell 7+
+- A Canvas LMS account with permission to create an access token
+- Codex with support for local skills
 
-1. Entre na sua instÉncia do Canvas LMS.
-2. Abra **Conta > Configuraá‰es**.
-3. Na seá∆o **Integraá‰es aprovadas**, selecione **Novo token de acesso**.
-4. Informe uma finalidade, como `Codex Canvas`, e defina uma expiraá∆o curta.
-5. Gere e copie o token imediatamente. O Canvas n∆o mostra o valor completo novamente.
+## Generate a Canvas access token
 
-O token equivale Ö sua credencial dentro das permiss‰es da conta. N∆o o coloque em comandos, arquivos versionados, capturas de tela ou mensagens.
+1. Sign in to your Canvas LMS instance.
+2. Open **Account > Settings**.
+3. Under **Approved Integrations**, select **New Access Token**.
+4. Enter a purpose, such as `Codex Canvas`, and set a short expiration.
+5. Generate and copy the token immediately. Canvas will not display the full value again.
 
-## Configurar as vari†veis de ambiente
+The token acts as a credential within your account's permissions. Do not put it in commands, version-controlled files, screenshots, or messages.
 
-Execute no PowerShell. O token digitado fica oculto:
+## Set up environment variables
+
+Run this in PowerShell. The token you enter will be hidden:
 
 ```powershell
-$secureToken = Read-Host "Cole o token do Canvas" -AsSecureString
+$secureToken = Read-Host "Paste your Canvas token" -AsSecureString
 $tokenPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
 
 try {
@@ -37,7 +39,7 @@ try {
 
     [Environment]::SetEnvironmentVariable(
         "CANVAS_BASE_URL",
-        "https://sua-instituicao.instructure.com",
+        "https://your-institution.instructure.com",
         "User"
     )
 }
@@ -48,18 +50,18 @@ finally {
 }
 ```
 
-Substitua `https://sua-instituicao.instructure.com` pela URL da sua instituiá∆o. Abra um novo terminal ap¢s configurar as vari†veis. Vari†veis persistentes do usu†rio s∆o armazenadas pelo Windows e podem ser lidas por processos executados na mesma conta; prefira um token com expiraá∆o curta.
+Replace `https://your-institution.instructure.com` with your institution's URL. Open a new terminal after setting the variables. Windows stores persistent user environment variables, which processes running under the same account can read; use a token with a short expiration.
 
-Verifique a configuraá∆o sem mostrar os valores:
+Check that both variables are set without displaying their values:
 
 ```powershell
 [bool][Environment]::GetEnvironmentVariable("CANVAS_API_TOKEN", "User")
 [bool][Environment]::GetEnvironmentVariable("CANVAS_BASE_URL", "User")
 ```
 
-## Instalar a skill
+## Install the skill
 
-Clone este reposit¢rio e copie a skill para o diret¢rio pessoal do Codex:
+Clone this repository and copy the skill to your personal Codex skills directory:
 
 ```powershell
 git clone https://github.com/gabrieldfmrezende/canvas-codex-skill.git
@@ -71,29 +73,29 @@ Copy-Item -LiteralPath ".\SKILL.md" -Destination $destination -Force
 Copy-Item -LiteralPath ".\scripts" -Destination $destination -Recurse -Force
 ```
 
-Reinicie o Codex ou abra uma nova sess∆o para que a skill seja descoberta.
+Restart Codex or open a new session so it can discover the skill.
 
-## Testar e usar o helper
+## Test and use the helper
 
-Use `ExecutionPolicy Bypass` apenas no processo atual; a pol°tica permanente do Windows n∆o Ç alterada.
+`ExecutionPolicy Bypass` applies only to the current process; it does not change the permanent Windows policy.
 
 ```powershell
-# Validar autenticaá∆o
+# Check authentication
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\canvas.ps1 -Action profile
 
-# Listar cursos ativos
+# List active courses
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\canvas.ps1 -Action courses
 
-# Listar arquivos de um curso
+# List files in a course
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\canvas.ps1 -Action files -CourseId 12345
 
-# Baixar um arquivo
+# Download a file
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\canvas.ps1 -Action download -FileId 67890 -OutputPath .\downloads
 ```
 
-O helper preserva arquivos existentes. A substituiá∆o exige `-Force` e deve ser usada somente quando desejada.
+The helper preserves existing files. Replacing a file requires `-Force`; use it only when you intend to overwrite the file.
 
-## Remover as credenciais
+## Remove the credentials
 
 ```powershell
 [Environment]::SetEnvironmentVariable("CANVAS_API_TOKEN", $null, "User")
