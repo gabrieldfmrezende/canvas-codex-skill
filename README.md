@@ -7,6 +7,7 @@ A personal Codex skill for accessing Canvas LMS courses and files through the RE
 ## Requirements
 
 - Windows PowerShell 5.1 or PowerShell 7+
+- Node.js with npm/npx
 - A Canvas LMS account with permission to create an access token
 - Codex with support for local skills
 
@@ -61,23 +62,19 @@ Check that both variables are set without displaying their values:
 
 ## Install the skill
 
-Clone this repository and copy the skill to your personal Codex skills directory:
+Install the skill from this repository:
 
 ```powershell
-git clone https://github.com/gabrieldfmrezende/canvas-codex-skill.git
-cd canvas-codex-skill
-
-$destination = Join-Path $env:USERPROFILE ".codex\skills\canvas"
-New-Item -ItemType Directory -Path $destination -Force | Out-Null
-Copy-Item -LiteralPath ".\SKILL.md" -Destination $destination -Force
-Copy-Item -LiteralPath ".\scripts" -Destination $destination -Recurse -Force
+npx skills@latest add gabrieldfmrezende/canvas-codex-skill
 ```
+
+When prompted, select Codex. Choose a global installation to use the skill across all projects.
 
 Restart Codex or open a new session so it can discover the skill.
 
 ## Test and use the helper
 
-`ExecutionPolicy Bypass` applies only to the current process; it does not change the permanent Windows policy.
+Run these commands from the installed skill directory shown by the installer. `ExecutionPolicy Bypass` applies only to the current process; it does not change the permanent Windows policy.
 
 ```powershell
 # Check authentication
