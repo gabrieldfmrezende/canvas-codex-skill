@@ -28,6 +28,9 @@ The assistant installs the pinned vault dependency locally using the included lo
 
 The assistant asks for your institution's HTTPS Canvas URL (a course URL also works), guides token creation and accepts the token in a **hidden prompt**. In Canvas, open **Account > Settings > Approved Integrations > New Access Token** and choose a short expiration. If the institution disables token creation, contact its administrator.
 
+> [!WARNING]
+> Record your token's expiration date and set a calendar reminder to renew it before that date. When it expires, the Canvas connection will stop working. After generating a new token, run `node scripts/setup.mjs configure` to update your configuration.
+
 After checking your profile, setup saves the URL and token together and shows the connected account. Start a new session in your selected agent and ask it to list your Canvas courses. Use `--lang pt-BR` or `--lang en` to override automatic language detection.
 
 This is a personal local token workflow. Applications seeking authorization from other users should use Canvas OAuth. [Canvas token guide](https://community.instructure.com/en/kb/articles/662901-how-do-i-manage-api-access-tokens-in-my-user-account), [OAuth documentation](https://canvas.instructure.com/doc/api/file.oauth.html).

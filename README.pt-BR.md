@@ -28,6 +28,9 @@ O assistente instala a dependência do cofre localmente usando as versões do lo
 
 Informe a URL HTTPS do Canvas da instituição (uma URL de curso também funciona). O assistente orienta a criação do token e recebe-o em uma **entrada oculta**. No Canvas, abra **Conta > Configurações > Integrações aprovadas > Novo token de acesso** e escolha uma expiração curta. Se a instituição bloquear essa opção, contate o administrador.
 
+> [!WARNING]
+> Anote a data de expiração do token e crie um lembrete no calendário para renová-lo antes dessa data. Quando ele expirar, a conexão com Canvas deixará de funcionar. Após gerar um novo token, execute `node scripts/setup.mjs configure` para atualizar a configuração.
+
 Após validar o perfil, o assistente salva URL e token juntos e mostra a conta conectada. Abra uma nova sessão no agente escolhido e peça para listar seus cursos. Use `--lang pt-BR` ou `--lang en` para escolher o idioma explicitamente.
 
 Este é um fluxo pessoal e local com token. Aplicações que solicitam autorização de outros usuários devem usar OAuth do Canvas. [Guia oficial de tokens](https://community.instructure.com/en/kb/articles/662901-how-do-i-manage-api-access-tokens-in-my-user-account), [Documentação de OAuth](https://canvas.instructure.com/doc/api/file.oauth.html).
