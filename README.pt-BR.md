@@ -81,6 +81,21 @@ Códigos de saída: **0** sucesso, **2** configuração/argumentos, **3** autent
 
 Se a instalação da dependência falhar, verifique npm, rede e permissões no diretório instalado. Nesse diretório, execute `npm ci --omit=dev --ignore-scripts` (`npm.cmd` no PowerShell restrito) e tente o assistente novamente.
 
+### Funciona no terminal, mas o agente não encontra a configuração
+
+O sandbox do agente pode impedir o acesso ao cofre do usuário do sistema. No Windows, isso pode aparecer como `No Canvas configuration found` mesmo quando a conexão salva funciona no seu PowerShell. Essa mensagem, sozinha, não confirma que você precisa configurar o Canvas novamente.
+
+1. No seu próprio terminal, entre no **mesmo diretório da skill instalada** usado pelo agente e execute:
+
+   ```sh
+   node scripts/setup.mjs doctor --json
+   ```
+
+2. Se retornar `ok: true`, mas o agente informar configuração ausente ou erro de cofre, peça ao agente para repetir esse comando de leitura fora do sandbox, sob o usuário do sistema que configurou a conexão, usando o mecanismo normal de aprovação de execução. Siga a solicitação de aprovação, caso o agente a exija. Um resultado bem-sucedido com `source: "vault"` confirma que a conexão salva está acessível nesse contexto de execução. Os próximos comandos do Canvas também precisam usar esse contexto permitido.
+3. Se a execução fora do sandbox não estiver disponível ou for negada, mantenha a política do sandbox e execute os helpers de leitura no seu terminal, por exemplo `node scripts/canvas.mjs courses` e depois `node scripts/canvas.mjs files --course-id <id>`. Você pode compartilhar os nomes relevantes de disciplinas/arquivos com o agente sem compartilhar credenciais.
+
+Essa comparação funcionou no Windows quando o sandbox informou configuração ausente e o mesmo diagnóstico fora dele retornou `{"ok":true,"source":"vault","environmentOverridesVault":false}`. O helper não consegue distinguir com segurança uma entrada ausente no cofre de uma entrada oculta pelo contexto de execução, por isso não altera permissões de execução automaticamente. Se o diagnóstico também falhar no seu próprio terminal, siga as orientações de configuração, dependência ou recuperação do cofre acima. Não apague a conexão salva, gere outro token ou desative o sandbox apenas para resolver essa diferença.
+
 ## Usar o helper
 
 Execute no diretório da skill instalada. O helper Node retorna JSON.

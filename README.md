@@ -81,6 +81,21 @@ Exit codes: **0** success, **2** configuration/arguments, **3** authentication (
 
 If bootstrap fails, check npm, the network and write access to the installed directory. From that directory run `npm ci --omit=dev --ignore-scripts` (`npm.cmd` on restricted Windows PowerShell), then retry setup.
 
+### Works in your terminal, but the agent cannot find the configuration
+
+An agent's sandbox can prevent access to the OS user's vault. On Windows, this can appear as `No Canvas configuration found` even though the saved connection works in your PowerShell. That message alone does not establish that you need to configure Canvas again.
+
+1. In your own terminal, enter the **same installed skill directory** used by the agent and run:
+
+   ```sh
+   node scripts/setup.mjs doctor --json
+   ```
+
+2. If it returns `ok: true` but the agent reports missing configuration or a vault error, ask the agent to retry this read-only command outside its sandbox, under the configured OS user, using its normal execution approval mechanism. Follow any approval prompt required by the agent. A successful result with `source: "vault"` confirms that the saved connection is accessible in that execution context. Subsequent Canvas commands must use that permitted context as well.
+3. If execution outside the sandbox is unavailable or denied, keep the sandbox policy and run the read-only helpers yourself from that terminal, for example `node scripts/canvas.mjs courses` and then `node scripts/canvas.mjs files --course-id <id>`. You can share the relevant course/file names with the agent without sharing credentials.
+
+This comparison succeeded on Windows when the sandbox reported a missing configuration and the same diagnosis outside it returned `{"ok":true,"source":"vault","environmentOverridesVault":false}`. The helper cannot reliably distinguish an absent vault entry from an entry hidden by the execution context, so it does not automatically change execution permissions. If diagnosis also fails in your own terminal, follow the configuration, dependency or vault recovery guidance above. Do not delete the saved connection, generate a new token or disable the sandbox just to address this difference.
+
 ## Use the helper
 
 Run from the installed skill directory. The Node helper returns JSON.
