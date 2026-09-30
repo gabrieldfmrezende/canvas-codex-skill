@@ -1,0 +1,9 @@
+{
+  "name": "canvas-agent-skill",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.20.0" },
+  "scripts": { "test": "node --test", "check": "node --check scripts/setup.mjs && node --check scripts/canvas.mjs" },
+  "dependencies": { "@napi-rs/keyring": "2.1.0" }
+}

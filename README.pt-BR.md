@@ -1,103 +1,117 @@
-# Canvas LMS skill for Codex
+# Skill do Canvas LMS
 
 Idiomas: [English](README.md) | Português (Brasil)
 
-Skill pessoal do Codex para consultar cursos e arquivos do Canvas LMS pela API REST. O helper incluído é somente de leitura, exceto pelo download local solicitado pelo usuário.
+Consulte cursos e arquivos do Canvas em agentes com suporte a skills locais. Windows, macOS e Linux compartilham um assistente de configuração; as credenciais ficam no cofre do sistema. Downloads ocorrem quando solicitados.
 
-## Requisitos
+## Instalar e conectar
 
-- Windows PowerShell 5.1 ou PowerShell 7+
-- Node.js com npm/npx
-- Uma conta do Canvas LMS com permissão para gerar token de acesso
-- Codex com suporte a skills locais
+Você precisa de **Node.js 22.20+ com npm**, um agente suportado pelo skills CLI e uma conta Canvas com permissão para criar token pessoal.
 
-## Gerar o token no Canvas
-
-1. Entre na sua instância do Canvas LMS.
-2. Abra **Conta > Configurações**.
-3. Na seção **Integrações aprovadas**, selecione **Novo token de acesso**.
-4. Informe uma finalidade, como `Codex Canvas`, e defina uma expiração curta.
-5. Gere e copie o token imediatamente. O Canvas não mostra o valor completo novamente.
-
-O token equivale à sua credencial dentro das permissões da conta. Não o coloque em comandos, arquivos versionados, capturas de tela ou mensagens.
-
-## Configurar as variáveis de ambiente
-
-Execute no PowerShell. O token digitado fica oculto:
-
-```powershell
-$secureToken = Read-Host "Cole o token do Canvas" -AsSecureString
-$tokenPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
-
-try {
-    $token = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($tokenPointer)
-
-    [Environment]::SetEnvironmentVariable(
-        "CANVAS_API_TOKEN",
-        $token,
-        "User"
-    )
-
-    [Environment]::SetEnvironmentVariable(
-        "CANVAS_BASE_URL",
-        "https://sua-instituicao.instructure.com",
-        "User"
-    )
-}
-finally {
-    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($tokenPointer)
-    $token = $null
-    $secureToken = $null
-}
+```sh
+npx --yes skills@1.7.0 add gabrieldfmrezende/canvas-codex-skill
 ```
 
-Substitua `https://sua-instituicao.instructure.com` pela URL da sua instituição. Abra um novo terminal após configurar as variáveis. Variáveis persistentes do usuário são armazenadas pelo Windows e podem ser lidas por processos executados na mesma conta; prefira um token com expiração curta.
+Selecione os agentes e a instalação global ou por projeto. Entre no diretório da skill informado pelo instalador e execute:
 
-Verifique a configuração sem mostrar os valores:
-
-```powershell
-[bool][Environment]::GetEnvironmentVariable("CANVAS_API_TOKEN", "User")
-[bool][Environment]::GetEnvironmentVariable("CANVAS_BASE_URL", "User")
+```sh
+node scripts/setup.mjs configure
 ```
 
-## Instalar a skill
+No PowerShell do Windows com execução de scripts restrita, use `npx.cmd` no lugar de `npx`; os scripts Node dispensam alteração de política. Para instalar diretamente em agentes escolhidos, por exemplo:
 
-Instale a skill diretamente deste repositório:
-
-```powershell
-npx skills@latest add gabrieldfmrezende/canvas-codex-skill
+```sh
+npx --yes skills@1.7.0 add gabrieldfmrezende/canvas-codex-skill --agent codex claude-code --skill canvas --global --yes --copy
 ```
 
-Quando solicitado, selecione Codex. Escolha a instalação global para usar a skill em todos os projetos.
+O assistente instala a dependência do cofre localmente usando as versões do lockfile; isso pode levar alguns minutos. Scripts de instalação do npm são desabilitados. Atualizações pelo skills CLI podem remover dependências; execute o assistente novamente depois.
 
-Reinicie o Codex ou abra uma nova sessão para que a skill seja descoberta.
+Informe a URL HTTPS do Canvas da instituição (uma URL de curso também funciona). O assistente orienta a criação do token e recebe-o em uma **entrada oculta**. No Canvas, abra **Conta > Configurações > Integrações aprovadas > Novo token de acesso** e escolha uma expiração curta. Se a instituição bloquear essa opção, contate o administrador.
 
-## Testar e usar o helper
+Após validar o perfil, o assistente salva URL e token juntos e mostra a conta conectada. Abra uma nova sessão no agente escolhido e peça para listar seus cursos. Use `--lang pt-BR` ou `--lang en` para escolher o idioma explicitamente.
 
-Execute estes comandos a partir do diretório da skill instalada, mostrado pelo instalador. Use `ExecutionPolicy Bypass` apenas no processo atual; a política permanente do Windows não é alterada.
+Este é um fluxo pessoal e local com token. Aplicações que solicitam autorização de outros usuários devem usar OAuth do Canvas. [Guia oficial de tokens](https://community.instructure.com/en/kb/articles/662901-how-do-i-manage-api-access-tokens-in-my-user-account), [Documentação de OAuth](https://canvas.instructure.com/doc/api/file.oauth.html).
 
-```powershell
-# Validar autenticação
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\canvas.ps1 -Action profile
+## Credenciais e migração
 
-# Listar cursos ativos
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\canvas.ps1 -Action courses
+Uma conta Canvas é salva por usuário do sistema, compartilhada entre agentes e projetos:
 
-# Listar arquivos de um curso
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\canvas.ps1 -Action files -CourseId 12345
+- Windows: Gerenciador de Credenciais.
+- macOS: Chaves; autorize o acesso solicitado pelo sistema quando necessário.
+- Linux: provedor Secret Service desbloqueado (por exemplo GNOME Keyring ou KeePassXC com Secret Service habilitado) e D-Bus de sessão.
 
-# Baixar um arquivo
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\canvas.ps1 -Action download -FileId 67890 -OutputPath .\downloads
-```
+Nenhum token é gravado em arquivo de configuração. Se o cofre estiver indisponível, habilite/desbloqueie-o e tente novamente, ou forneça um par completo de variáveis para uso temporário. Sessões Linux sem interface gráfica podem precisar de um provedor Secret Service; não há fallback automático para texto simples.
 
-O helper preserva arquivos existentes. A substituição exige `-Force` e deve ser usada somente quando desejada.
+O helper prioriza **ambas** as variáveis `CANVAS_BASE_URL` e `CANVAS_API_TOKEN` do processo. Se nenhuma existir, o Windows também verifica o ambiente persistente do usuário usado pela versão anterior. Na ausência, consulta o cofre. Um par parcial gera erro; valores de fontes diferentes nunca são combinados.
 
-## Remover as credenciais
+O assistente oferece migrar um par existente após validar o perfil. As variáveis são preservadas e continuam tendo prioridade. Ele pode mostrar os comandos de remoção; você escolhe executá-los. O assistente não altera o ambiente do terminal que o iniciou. Reinicie agentes/terminais existentes depois de remover variáveis persistentes.
+
+No Windows, remova as variáveis antigas do usuário e do terminal atual:
 
 ```powershell
-[Environment]::SetEnvironmentVariable("CANVAS_API_TOKEN", $null, "User")
-[Environment]::SetEnvironmentVariable("CANVAS_BASE_URL", $null, "User")
-
-Remove-Item Env:CANVAS_API_TOKEN -ErrorAction SilentlyContinue
-Remove-Item Env:CANVAS_BASE_URL -ErrorAction SilentlyContinue
+[Environment]::SetEnvironmentVariable('CANVAS_BASE_URL', $null, 'User')
+[Environment]::SetEnvironmentVariable('CANVAS_API_TOKEN', $null, 'User')
+Remove-Item Env:CANVAS_BASE_URL, Env:CANVAS_API_TOKEN -ErrorAction SilentlyContinue
 ```
+
+No macOS/Linux, execute `unset CANVAS_BASE_URL CANVAS_API_TOKEN` e remova exports antigos da configuração do shell. Mantenha tokens fora de conversas, argumentos de comandos, URLs, capturas de tela e arquivos versionados.
+
+## Diagnosticar e automatizar
+
+```sh
+node scripts/setup.mjs doctor
+node scripts/setup.mjs doctor --json
+node scripts/setup.mjs remove
+```
+
+O diagnóstico é somente de leitura: valida o perfil, informa a origem das credenciais e retorna um único documento JSON com `--json`. Não instala dependências. A remoção pede confirmação e exclui apenas a entrada do cofre; preserva variáveis e o token no Canvas. Use `remove --yes` para automação; revogue o token no Canvas quando necessário.
+
+Para configuração sem interação, forneça `CANVAS_API_TOKEN` por gerenciador de segredos ou ambiente do processo e execute:
+
+```sh
+node scripts/setup.mjs configure --non-interactive --base-url https://sua-instituicao.instructure.com
+```
+
+Adicione `--replace` para substituir uma entrada existente no cofre explicitamente. A URL também pode vir de `CANVAS_BASE_URL`. Não há argumento para token nem perguntas, e conexões inválidas preservam as credenciais anteriores.
+
+Códigos de saída: **0** sucesso, **2** configuração/argumentos, **3** autenticação (401), **4** rede/requisição, **5** cofre, **6** permissões (403), **7** arquivos, **8** runtime/dependência, **130** cancelamento.
+
+Se a instalação da dependência falhar, verifique npm, rede e permissões no diretório instalado. Nesse diretório, execute `npm ci --omit=dev --ignore-scripts` (`npm.cmd` no PowerShell restrito) e tente o assistente novamente.
+
+## Usar o helper
+
+Execute no diretório da skill instalada. O helper Node retorna JSON.
+
+```sh
+node scripts/canvas.mjs profile
+node scripts/canvas.mjs courses
+node scripts/canvas.mjs files --course-id 12345
+node scripts/canvas.mjs download --file-id 67890 --output-path ./downloads/
+```
+
+Um **diretório existente** recebe o nome do arquivo do Canvas. Caso contrário, o caminho é tratado como nome final do arquivo. Arquivos existentes são preservados, exceto quando você passa `--force` explicitamente.
+
+Os comandos PowerShell anteriores continuam disponíveis com Node instalado e retornam objetos PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/canvas.ps1 -Action profile
+powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/canvas.ps1 -Action courses
+powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/canvas.ps1 -Action files -CourseId 12345
+powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/canvas.ps1 -Action download -FileId 67890 -OutputPath ./notes.pdf
+```
+
+`ExecutionPolicy Bypass` afeta apenas esse processo. Use `pwsh` para PowerShell 7 nos demais sistemas.
+
+## Desenvolvimento e validação
+
+```sh
+npm ci --omit=dev --ignore-scripts
+npm run check
+npm test
+```
+
+Os testes usam credenciais fictícias e API simulada, incluindo subprocessos reais do CLI e PowerShell. O CI executa a suíte nos três sistemas.
+
+Para testar um **cofre nativo desbloqueado**, defina `CANVAS_TEST_VAULT=1` e execute `node --test test/vault.test.mjs`. O teste cria uma entrada fictícia e aleatória em `canvas-agent-skill-tests`, verifica a leitura em outro processo e exclui a entrada; não acessa as credenciais Canvas do usuário.
+
+Antes de publicar, conclua as [verificações manuais de instalação e plataformas](docs/validation.md). A compatibilidade de agentes acompanha o skills CLI; os alvos de integração completa nesta versão são Codex e Claude Code.
